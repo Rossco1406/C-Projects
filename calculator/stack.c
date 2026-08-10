@@ -15,7 +15,7 @@ double pop(void){
     double value;
 
     if (is_empty() == 1){
-        printf("Error: Cannot pop, stack is empty");
+        printf("Error: Cannot pop, stack is empty\n");
         return -1;
     } else {
         value = stack[--sp];
@@ -27,7 +27,7 @@ double peek(void){
     double value;
 
     if (is_empty() == 1){
-        printf("Error: Cannot peek, stack is empty");
+        printf("Error: Cannot peek, stack is empty\n");
         return -1;
     } else{
         value = stack[sp-1];

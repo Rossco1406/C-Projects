@@ -1,7 +1,14 @@
-struct calculator {
-    char operators[STACK_SIZE];
-    double values[STACK_SIZE];
+#ifndef CALC_H
+#define CALC_H
 
-    int operator_sp;
-    int value_sp;
+enum precedence_level {
+    PREC_NONE,
+    PREC_ADD_SUB,
+    PREC_MULT_DIV
 };
+
+void calculator(void);
+int apply_operator(char op, double a, double b, double *result);
+enum precedence_level precedence(char op);
+
+#endif
