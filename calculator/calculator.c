@@ -18,6 +18,8 @@ enum precedence_level precedence(char op)
         case '*':
         case '/':
             return PREC_MULT_DIV;
+        case '^':
+            return PREC_POWER;
 
         default:
             return PREC_NONE;
@@ -81,7 +83,7 @@ void calculator(void){
             if (!calculate_parenthesis())
                 error = 1;
         }   
-        else if (c == '+' || c == '-' || c == '*' || c == '/') {
+        else if (c == '+' || c == '-' || c == '*' || c == '/' || '^') {
 
             while (!op_is_empty()){
                 char top;
@@ -93,9 +95,13 @@ void calculator(void){
                 
                 if (precedence(top) < precedence(c))
                     break;
+
+                if (c == '^' && top == '^')
+                    break;
                 
                 if (!calculate_top()){
-                    error = 1; break;
+                    error = 1; 
+                    break;
                 }
             }
             if (!error)
@@ -133,6 +139,9 @@ int apply_operator(char op, double a, double b, double *result){
             }
 
             *result = a / b;
+            return 1;
+        case '^':
+            *result = pow(a, b);
             return 1;
 
         default:

@@ -5,6 +5,7 @@ enum precedence_level {
     PREC_NONE,
     PREC_ADD_SUB,
     PREC_MULT_DIV,
+    PREC_POWER,
     PREC_PARENTH
 };
 
