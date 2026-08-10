@@ -28,7 +28,7 @@ int peek(double *value){
         printf("Error: Cannot peek, stack is empty\n");
         return 0;
     } else{
-        *value = stack[sp-1];
+        *value = stack[sp - 1];
         return 1;
     }
 }
@@ -43,4 +43,9 @@ int is_full(void){
     if (sp == STACK_SIZE)
         return 1;
     return 0;
+}
+
+void clear_stack(void)
+{
+    sp = 0;
 }

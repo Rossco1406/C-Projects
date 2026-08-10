@@ -45,3 +45,8 @@ int op_is_full(void){
         return 1;
     return 0;
 }
+
+void op_clear(void)
+{
+    sp = 0;
+}

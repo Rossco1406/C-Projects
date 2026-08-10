@@ -29,10 +29,31 @@ void calculator(void){
     double value;
 
     while ((c = getch()) != EOF) {
+        if (c == '\n') {
+            int success = 1;
+            while (!op_is_empty()){
+                if (!calculate_top()) {
+                    success = 0;
+                    break;
+                }
+            }
+        
+            if (success && !is_empty()) {
+                double result;
+                
+                if (peek(&result))
+                    printf("Result: %.2f\n", result);
+            }
+
+            clear_stack();
+            op_clear();
+
+            continue;
+        }
+
         ungetch(c);
 
         if (get_number(&value)) {
-            printf("NUMBER: %.2f\n", value);
             push(value);
             continue;
         }
@@ -40,19 +61,26 @@ void calculator(void){
         c = getch();
 
         if (c == '+' || c == '-' || c == '*' || c == '/') {
-            printf("OPERATOR: %c\n", c);
+
+            while (!op_is_empty()){
+                char top;
+
+                op_peek(&top);
+                
+                if (precedence(top) < precedence(c))
+                    break;
+                
+                calculate_top();
+            }
             op_push(c);
         }
 
         else if (!isspace(c)) {
             printf("Error: Unknown character '%c'\n", c);
         }
+
     }
 
-    calculate_top();
-
-    if (peek(&value))
-        printf("Result: %.2f\n", value);
 
 }
 

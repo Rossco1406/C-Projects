@@ -8,5 +8,5 @@ int op_pop(char *op);
 int op_peek(char *op);
 int op_is_empty(void);
 int op_is_full(void);
-
+void op_clear(void);
 #endif
