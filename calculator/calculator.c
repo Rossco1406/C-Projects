@@ -48,6 +48,12 @@ void calculator(void){
             printf("Error: Unknown character '%c'\n", c);
         }
     }
+
+    calculate_top();
+
+    if (peek(&value))
+        printf("Result: %.2f\n", value);
+
 }
 
 int apply_operator(char op, double a, double b, double *result){
@@ -77,4 +83,26 @@ int apply_operator(char op, double a, double b, double *result){
             printf("Error: Unknown operator\n");
             return 0;
     }
+}
+
+int calculate_top(void){
+    double operand_1, operand_2;
+    char operator;
+    double result;
+
+    if (!op_pop(&operator))
+        return 0;
+
+    if (!pop(&operand_2))
+        return 0;
+
+    if (!pop(&operand_1))
+        return 0;
+
+    if (!apply_operator(operator, operand_1, operand_2, &result))
+        return 0;
+
+    push(result);
+
+    return 1;
 }

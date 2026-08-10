@@ -1,5 +1,6 @@
 # Compiled programs
-calculator
+*.out
+/calculator/calculator
 
 # Object files
 *.o
