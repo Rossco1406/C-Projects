@@ -1,8 +1,6 @@
 #include "stack.h"
 #include <stdio.h>
 
-#define STACK_SIZE 100
-
 static double stack[STACK_SIZE];
 static int sp;
 

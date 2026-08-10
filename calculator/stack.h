@@ -1,6 +1,8 @@
 #ifndef STACK_H
 #define STACK_H
 
+#define STACK_SIZE 100
+
 void push(double value);
 double pop(void);
 double peek(void);
