@@ -27,18 +27,31 @@ enum precedence_level precedence(char op)
 void calculator(void){
     int c;
     double value;
+    int error = 0;
 
     while ((c = getch()) != EOF) {
+        
         if (c == '\n') {
-            int success = 1;
-            while (!op_is_empty()){
-                if (!calculate_top()) {
-                    success = 0;
-                    break;
+            if (!error) {
+                while (!op_is_empty()){
+                    char top;
+
+                    op_peek(&top);
+
+                    if (top == '(') { 
+                        printf("Error: Missing \')\'\n");
+                        error = 1;
+                        break;
+                    }
+
+                    if (!calculate_top()) { 
+                        error = 1; 
+                        break; 
+                    }
                 }
             }
         
-            if (success && !is_empty()) {
+            if (!error && !is_empty()) {
                 double result;
                 
                 if (peek(&result))
@@ -47,6 +60,7 @@ void calculator(void){
 
             clear_stack();
             op_clear();
+            error = 0;
 
             continue;
         }
@@ -60,23 +74,37 @@ void calculator(void){
 
         c = getch();
 
-        if (c == '+' || c == '-' || c == '*' || c == '/') {
+        if (c == '(') {
+            op_push(c);
+        }
+        else if (c == ')') {
+            if (!calculate_parenthesis())
+                error = 1;
+        }   
+        else if (c == '+' || c == '-' || c == '*' || c == '/') {
 
             while (!op_is_empty()){
                 char top;
 
                 op_peek(&top);
+
+                if (top == '(')
+                    break;
                 
                 if (precedence(top) < precedence(c))
                     break;
                 
-                calculate_top();
+                if (!calculate_top()){
+                    error = 1; break;
+                }
             }
-            op_push(c);
+            if (!error)
+                op_push(c);
         }
 
         else if (!isspace(c)) {
             printf("Error: Unknown character '%c'\n", c);
+            error = 1;
         }
 
     }
@@ -133,4 +161,25 @@ int calculate_top(void){
     push(result);
 
     return 1;
+}
+
+int calculate_parenthesis(void)
+{
+    char top;
+
+    while (!op_is_empty()) {
+
+        op_peek(&top);
+
+        if (top == '(') {
+            op_pop(&top);
+            return 1;
+        }
+
+        if (!calculate_top())
+            return 0;
+    }
+
+    printf("Error: Missing '('\n");
+    return 0;
 }
