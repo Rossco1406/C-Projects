@@ -11,27 +11,27 @@ void push(double value){
         printf("Error: Stack is full, cannot push\n");
 }
 
-double pop(void){
+int pop(double *value){
     double value;
 
     if (is_empty() == 1){
         printf("Error: Cannot pop, stack is empty\n");
-        return -1;
+        return 0;
     } else {
-        value = stack[--sp];
-        return value;
+        *value = stack[--sp];
+        return 1;
     }
 }
 
-double peek(void){
+int peek(double *value){
     double value;
 
     if (is_empty() == 1){
         printf("Error: Cannot peek, stack is empty\n");
-        return -1;
+        return 0;
     } else{
-        value = stack[sp-1];
-        return value;
+        *value = stack[sp-1];
+        return 1;
     }
 }
 

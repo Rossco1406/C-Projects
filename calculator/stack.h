@@ -4,8 +4,8 @@
 #define STACK_SIZE 100
 
 void push(double value);
-double pop(void);
-double peek(void);
+int pop(double *value);
+int peek(double *value);
 int is_empty(void);
 int is_full(void);
 
