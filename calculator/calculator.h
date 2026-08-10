@@ -10,6 +10,5 @@ enum precedence_level {
 void calculator(void);
 int apply_operator(char op, double a, double b, double *result);
 enum precedence_level precedence(char op);
-int read_number(void);
 int is_operator(char c);
 #endif

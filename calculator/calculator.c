@@ -1,8 +1,12 @@
 #include "calculator.h"
 #include "stack.h"
 #include "opstack.h"
+#include "input.h"
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+
 
 enum precedence_level precedence(char op)
 {
@@ -20,7 +24,31 @@ enum precedence_level precedence(char op)
     }
 }
 
-void calculator(void){}
+void calculator(void){
+    int c;
+    double value;
+
+    while ((c = getch()) != EOF) {
+        ungetch(c);
+
+        if (get_number(&value)) {
+            printf("NUMBER: %.2f\n", value);
+            push(value);
+            continue;
+        }
+
+        c = getch();
+
+        if (c == '+' || c == '-' || c == '*' || c == '/') {
+            printf("OPERATOR: %c\n", c);
+            op_push(c);
+        }
+
+        else if (!isspace(c)) {
+            printf("Error: Unknown character '%c'\n", c);
+        }
+    }
+}
 
 int apply_operator(char op, double a, double b, double *result){
     switch (op){
@@ -50,4 +78,3 @@ int apply_operator(char op, double a, double b, double *result){
             return 0;
     }
 }
-

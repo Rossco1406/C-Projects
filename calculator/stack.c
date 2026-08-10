@@ -12,7 +12,6 @@ void push(double value){
 }
 
 int pop(double *value){
-    double value;
 
     if (is_empty() == 1){
         printf("Error: Cannot pop, stack is empty\n");
@@ -24,7 +23,6 @@ int pop(double *value){
 }
 
 int peek(double *value){
-    double value;
 
     if (is_empty() == 1){
         printf("Error: Cannot peek, stack is empty\n");
