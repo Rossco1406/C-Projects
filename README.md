@@ -2,7 +2,7 @@
 
 A collection of C projects built to apply and develop the concepts learned while working through *The C Programming Language* by Brian W. Kernighan and Dennis M. Ritchie (K&R).
 
-The projects increase in complexity, progressing from fundamental C programming concepts to Unix system programming and networking.
+The projects are organised into separate directories, with each project focusing on different areas of C programming.
 
 ## Projects
 
@@ -12,11 +12,19 @@ A command-line calculator written in C.
 
 **Topics:**
 
-* Functions
-* Input handling
-* Operators and expressions
+* Basic arithmetic: +, -, *, /
+* Operator precedence
+* Parentheses
+* Powers using ^
+* Right-associative exponentiation
+* Unary minus
+* Floating-point numbers
 * Error handling
-* Parsing
+* Custom input handling
+* Separate value and operator stacks
+* Pointers
+
+The calculator is implemented using multiple source and header files to practise modular C programming.
 
 ### 2. File Statistics
 
