@@ -20,6 +20,8 @@ enum precedence_level precedence(char op)
             return PREC_MULT_DIV;
         case '^':
             return PREC_POWER;
+        case '~':
+            return PREC_UNARY;
 
         default:
             return PREC_NONE;
@@ -29,7 +31,9 @@ enum precedence_level precedence(char op)
 void calculator(void){
     int c;
     double value;
+
     int error = 0;
+    int expecting_value = 1;
 
     while ((c = getch()) != EOF) {
         
@@ -71,6 +75,7 @@ void calculator(void){
 
         if (get_number(&value)) {
             push(value);
+            expecting_value = 0;
             continue;
         }
 
@@ -78,25 +83,58 @@ void calculator(void){
 
         if (c == '(') {
             op_push(c);
+            expecting_value = 1;
         }
         else if (c == ')') {
             if (!calculate_parenthesis())
                 error = 1;
-        }   
-        else if (c == '+' || c == '-' || c == '*' || c == '/' || '^') {
+            else
+                expecting_value = 0;
+        } 
+        else if (c == '-') {
+            if (expecting_value) {
+                op_push('~');
+            }
+            else{
+                while (!op_is_empty()) { 
+                    char top; 
+                    
+                    op_peek(&top); 
+                    
+                    if (top == '(') 
+                        break; 
+                    
+                    if (precedence(top) < precedence(c))
+                        break; 
+                    
+                    if (!calculate_top()) { 
+                        error = 1; 
+                        break; 
+                    }
+                }
+                if (!error) 
+                    op_push('-');
+            }
+            expecting_value = 1;
+        }
+        else if (c == '+' || c == '*' || c == '/' || c =='^') {
 
             while (!op_is_empty()){
                 char top;
 
                 op_peek(&top);
 
-                if (top == '(')
+                if (top == '('){
+                    break;
+                }
+
+                if (top == '~' && c == '^')
+                    break;
+                
+                if (c == '^' && top == '^')
                     break;
                 
                 if (precedence(top) < precedence(c))
-                    break;
-
-                if (c == '^' && top == '^')
                     break;
                 
                 if (!calculate_top()){
@@ -106,6 +144,8 @@ void calculator(void){
             }
             if (!error)
                 op_push(c);
+            
+            expecting_value = 1;
         }
 
         else if (!isspace(c)) {
@@ -157,6 +197,17 @@ int calculate_top(void){
 
     if (!op_pop(&operator))
         return 0;
+    
+    if (operator == '~') {
+        if (!pop(&operand_1))
+            return 0;
+
+        if (!apply_unary_operator(operator, operand_1, &result))
+            return 0;
+
+        push(result);
+        return 1;
+    }
 
     if (!pop(&operand_2))
         return 0;
@@ -178,7 +229,8 @@ int calculate_parenthesis(void)
 
     while (!op_is_empty()) {
 
-        op_peek(&top);
+        if (!op_peek(&top))
+            return 0;
 
         if (top == '(') {
             op_pop(&top);
@@ -191,4 +243,17 @@ int calculate_parenthesis(void)
 
     printf("Error: Missing '('\n");
     return 0;
+}
+
+int apply_unary_operator(char op, double a, double *result)
+{
+    switch (op) {
+        case '~':
+            *result = -a;
+            return 1;
+
+        default:
+            printf("Error: Unknown unary operator\n");
+            return 0;
+    }
 }
