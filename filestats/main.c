@@ -5,16 +5,16 @@ int main(int argc, char *argv[])
     FILE *input;
     FILE *output;
     char *prog = argv[0];
-    
+
     if (argc == 1)
-        filestats(stdin,stdout);
+        filestats(stdin,stdout,NULL,NULL);
     else if (argc == 2){
         input = fopen(argv[1], "r");
         if (input == NULL) {
             fprintf(stderr, "%s:  %s doesnt exist\n", prog, argv[1]);
             return 1;
         }
-        filestats(input,stdout);
+        filestats(input,stdout,argv[1],NULL);
         fclose(input);
 
     }
@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
             return 1;
         }
         
-        filestats(input, output);
+        filestats(input, output, argv[1],argv[2]);
 
         fclose(input);
         fclose(output);
