@@ -1,12 +1,10 @@
 # Compiled programs
 *.out
 /calculator/calculator
+/filestats/filestats
 
 # Object files
 *.o
-
-# Debug/build files
-*.out
 
 # Core dumps
 core
