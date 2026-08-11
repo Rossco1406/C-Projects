@@ -50,10 +50,10 @@ void printStats(FILE *fout, long fileSize, int lines, int words, int chars, cons
         fprintf(fout, "Keyboard input\n");
     
     if (fileSize >= 0)
-        fprintf(fout, "File Size: %ld\n", fileSize);
+        fprintf(fout, "File Size: %ld Bytes \n", fileSize);
     else
         fprintf(fout, "File Size: unknown\n");
-        
+
     fprintf(fout, "Lines: %d \n", lines);
     fprintf(fout, "Words: %d \n", words);
     fprintf(fout, "Characters: %d \n", chars);
