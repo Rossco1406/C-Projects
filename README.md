@@ -32,12 +32,13 @@ A command-line tool for analysing files and displaying statistics about their co
 
 **Topics:**
 
-* File I/O
+* Standard input and output streams
 * Strings
 * Arrays
 * Pointers
 * Dynamic memory
 * Command-line arguments
+
 
 ### 3. Mini Shell & Server
 
