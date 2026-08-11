@@ -1,7 +1,7 @@
 #include "filestats.h"
 #include <ctype.h>
 
-void filestats(FILE *fin, FILE *fout){
+void filestats(FILE *fin, FILE *fout, const char *namein, const char *nameout){
 
     int c;
     int lines = 0;
@@ -38,16 +38,22 @@ void filestats(FILE *fin, FILE *fout){
 
     if (last != '\n' && chars > 0)
         lines++;
+
+    printStats(fout, fileSize, lines, words, chars, namein,nameout);
 }
 
-void printStats(FILE *fin, FILE *fout, long fileSize, int lines, int words, int chars, const char *namein, const char *nameout){
+void printStats(FILE *fout, long fileSize, int lines, int words, int chars, const char *namein, const char *nameout){
 
     if (namein != NULL)
         fprintf(fout, "Filename: %s \n", namein);
     else
         fprintf(fout, "Keyboard input\n");
-
-    fprintf(fout, "File Size: %ld \n",fileSize);
+    
+    if (fileSize >= 0)
+        fprintf(fout, "File Size: %ld\n", fileSize);
+    else
+        fprintf(fout, "File Size: unknown\n");
+        
     fprintf(fout, "Lines: %d \n", lines);
     fprintf(fout, "Words: %d \n", words);
     fprintf(fout, "Characters: %d \n", chars);
