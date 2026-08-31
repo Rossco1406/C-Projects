@@ -11,14 +11,16 @@ struct shell{
     char cwd[MAXDIR];
     char input[MAXINPUT];
     int argc;
-    char argv[MAXARGS]
-} my_shell;
+    char *argv[MAXARGS];
+};
+
+extern struct shell my_shell;
 
 void init_shell();
 void shell_run(void);
 void get_cwd(void);
 void print_prompt(void);
 void read_input(void);
-void execute_command(void);
+void exectute_command(void);
 
 #endif

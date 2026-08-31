@@ -1,9 +1,13 @@
 #include "shell.h"
+#include "parser.h"
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <unistd.h>
+
+struct shell my_shell;
 
 void shell_run(void)
 {
@@ -13,7 +17,7 @@ void shell_run(void)
         print_prompt();
         read_input();
         parse_input();
-        execute_command();
+        exectute_command();
     }
 }
 
@@ -46,4 +50,8 @@ void get_cwd(void)
     {
         perror("getcwd");
     }
+}
+
+void exectute_command(){
+
 }
