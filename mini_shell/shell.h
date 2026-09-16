@@ -27,7 +27,7 @@ void execute_external_command(void);
 void remove_redirection(int position);
 void handle_redirections(void);
 int find_pipe(void);
-void execute_pipe(int pipe_pos);
+void execute_pipes(void);
 
 
 #endif

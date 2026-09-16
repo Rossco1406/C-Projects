@@ -71,11 +71,9 @@ void execute_command()
         return;
     }
 
-    int pipe_pos = find_pipe();
-
-    if (pipe_pos != -1)
+    if (find_pipe() != -1)
     {
-        execute_pipe(pipe_pos);
+        execute_pipes();
         return;
     }
 
@@ -134,78 +132,101 @@ int find_pipe()
     return -1;
 }
 
-void execute_pipe(int pipe_pos)
+void execute_pipes()
 {
-    int pipefd[2];
+    int command_count = 1;
 
-    if (pipe(pipefd) < 0)
+    for (int i = 0; i < my_shell.argc; i++)
     {
-        perror("pipe");
-        return;
-    }
-
-    char **left_argv = my_shell.argv;
-    char **right_argv = &my_shell.argv[pipe_pos + 1];
-
-    my_shell.argv[pipe_pos] = NULL;
-
-    pid_t left_pid = fork();
-
-    if (left_pid < 0)
-    {
-        perror("fork");
-        return;
-    }
-
-    if (left_pid == 0)
-    {
-        close(pipefd[0]);
-
-        if (dup2(pipefd[1], STDOUT_FILENO) < 0)
+        if (strcmp(my_shell.argv[i], "|") == 0)
         {
-            perror("dup2");
-            exit(1);
+            command_count++;
+        }
+    }
+
+    int pipe_count = command_count - 1;
+
+    int pipes[pipe_count][2];
+    pid_t pids[command_count];
+
+    for (int i = 0; i < pipe_count; i++)
+    {
+        if (pipe(pipes[i]) < 0)
+        {
+            perror("pipe");
+            return;
+        }
+    }
+
+    char **commands[command_count];
+
+    int command_index = 0;
+    commands[command_index] = my_shell.argv;
+
+    for (int i = 0; i < my_shell.argc; i++)
+    {
+        if (strcmp(my_shell.argv[i], "|") == 0)
+        {
+            my_shell.argv[i] = NULL;
+
+            command_index++;
+            commands[command_index] = &my_shell.argv[i + 1];
+        }
+    }
+
+    for (int i = 0; i < command_count; i++)
+    {
+        pids[i] = fork();
+
+        if (pids[i] < 0)
+        {
+            perror("fork");
+            return;
         }
 
-        close(pipefd[1]);
-
-        execvp(left_argv[0], left_argv);
-
-        perror("execvp");
-        exit(1);
-    }
-
-    pid_t right_pid = fork();
-
-    if (right_pid < 0)
-    {
-        perror("fork");
-        return;
-    }
-
-    if (right_pid == 0)
-    {
-        close(pipefd[1]);
-
-        if (dup2(pipefd[0], STDIN_FILENO) < 0)
+        if (pids[i] == 0)
         {
-            perror("dup2");
+            if (i > 0)
+            {
+                if (dup2(pipes[i - 1][0], STDIN_FILENO) < 0)
+                {
+                    perror("dup2");
+                    exit(1);
+                }
+            }
+
+            if (i < command_count - 1)
+            {
+                if (dup2(pipes[i][1], STDOUT_FILENO) < 0)
+                {
+                    perror("dup2");
+                    exit(1);
+                }
+            }
+
+            for (int j = 0; j < pipe_count; j++)
+            {
+                close(pipes[j][0]);
+                close(pipes[j][1]);
+            }
+
+            execvp(commands[i][0], commands[i]);
+
+            perror("execvp");
             exit(1);
         }
-
-        close(pipefd[0]);
-
-        execvp(right_argv[0], right_argv);
-
-        perror("execvp");
-        exit(1);
     }
 
-    close(pipefd[0]);
-    close(pipefd[1]);
+    for (int i = 0; i < pipe_count; i++)
+    {
+        close(pipes[i][0]);
+        close(pipes[i][1]);
+    }
 
-    waitpid(left_pid, NULL, 0);
-    waitpid(right_pid, NULL, 0);
+    for (int i = 0; i < command_count; i++)
+    {
+        waitpid(pids[i], NULL, 0);
+    }
 }
 
 void handle_redirections()
