@@ -42,7 +42,8 @@ void print_prompt(){
 
 void read_input(void)
 {
-    fgets(my_shell.input, sizeof(my_shell.input), stdin);
+    if (fgets(my_shell.input, sizeof(my_shell.input), stdin) == NULL)
+        exit(0);
 }
 
 void get_cwd(void)
@@ -54,6 +55,33 @@ void get_cwd(void)
 }
 
 void execute_command(){
+
+    if (my_shell.argv[0] == NULL)
+    {
+        return;
+    }
+
+    if (strcmp(my_shell.argv[0],"exit")== 0){
+        exit(0);
+    }
+
+    if (strcmp(my_shell.argv[0],"cd") == 0 ){
+        if (my_shell.argv[1] == NULL)
+        {
+            char *home = getenv("HOME");
+
+            if (home == NULL || chdir(home) != 0)
+                perror("cd");
+        }
+        else if (chdir(my_shell.argv[1]) != 0)
+        {
+            perror("cd");
+        }
+
+        get_cwd();
+        return;
+    }
+
     pid_t p = fork();
     if(p<0){
       perror("fork fail");
