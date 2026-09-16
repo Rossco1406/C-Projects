@@ -71,6 +71,14 @@ void execute_command()
         return;
     }
 
+    int pipe_pos = find_pipe();
+
+    if (pipe_pos != -1)
+    {
+        execute_pipe(pipe_pos);
+        return;
+    }
+
     execute_external_command();
 }
 
@@ -126,9 +134,78 @@ int find_pipe()
     return -1;
 }
 
-void execute_pipe(int pipe_pos){
+void execute_pipe(int pipe_pos)
+{
+    int pipefd[2];
 
+    if (pipe(pipefd) < 0)
+    {
+        perror("pipe");
+        return;
+    }
 
+    char **left_argv = my_shell.argv;
+    char **right_argv = &my_shell.argv[pipe_pos + 1];
+
+    my_shell.argv[pipe_pos] = NULL;
+
+    pid_t left_pid = fork();
+
+    if (left_pid < 0)
+    {
+        perror("fork");
+        return;
+    }
+
+    if (left_pid == 0)
+    {
+        close(pipefd[0]);
+
+        if (dup2(pipefd[1], STDOUT_FILENO) < 0)
+        {
+            perror("dup2");
+            exit(1);
+        }
+
+        close(pipefd[1]);
+
+        execvp(left_argv[0], left_argv);
+
+        perror("execvp");
+        exit(1);
+    }
+
+    pid_t right_pid = fork();
+
+    if (right_pid < 0)
+    {
+        perror("fork");
+        return;
+    }
+
+    if (right_pid == 0)
+    {
+        close(pipefd[1]);
+
+        if (dup2(pipefd[0], STDIN_FILENO) < 0)
+        {
+            perror("dup2");
+            exit(1);
+        }
+
+        close(pipefd[0]);
+
+        execvp(right_argv[0], right_argv);
+
+        perror("execvp");
+        exit(1);
+    }
+
+    close(pipefd[0]);
+    close(pipefd[1]);
+
+    waitpid(left_pid, NULL, 0);
+    waitpid(right_pid, NULL, 0);
 }
 
 void handle_redirections()
