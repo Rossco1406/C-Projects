@@ -105,6 +105,9 @@ void execute_command(){
                 else if (strcmp(my_shell.argv[redirect], ">>") == 0) {
                     fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
                 }
+                else if (strcmp(my_shell.argv[redirect], "<") == 0) {
+                    fd = open(filename, O_RDONLY);
+                }
 
                 if (fd == -1){
                     perror("open");
@@ -143,6 +146,8 @@ int find_redirection(){
             return i;
         }
         else if (strcmp(my_shell.argv[i], ">>") == 0)
+            return i;
+        else if (strcmp(my_shell.argv[i], "<") == 0)
             return i;
     }
 
