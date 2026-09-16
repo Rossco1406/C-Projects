@@ -19,9 +19,15 @@ extern struct shell my_shell;
 void init_shell();
 void shell_run(void);
 void get_cwd(void);
+void handle_cd(void);
 void print_prompt(void);
 void read_input(void);
 void execute_command(void);
-int find_redirection(void);
+void execute_external_command(void);
+void remove_redirection(int position);
+void handle_redirections(void);
+int find_pipe(void);
+void execute_pipe(int pipe_pos);
+
 
 #endif
