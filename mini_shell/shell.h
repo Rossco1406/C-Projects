@@ -22,5 +22,6 @@ void get_cwd(void);
 void print_prompt(void);
 void read_input(void);
 void execute_command(void);
+int find_redirection(void);
 
 #endif

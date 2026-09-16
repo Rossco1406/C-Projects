@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <fcntl.h>
 
 struct shell my_shell;
 
@@ -88,6 +89,42 @@ void execute_command(){
       exit(1);
     }
     else if (p == 0){
+        int redirect = find_redirection();
+        if (redirect != -1){
+            if (my_shell.argv[redirect + 1] == NULL){
+                fprintf(stderr, "No filename\n");
+                exit(1);
+            }
+            else{
+                char *filename = my_shell.argv[redirect + 1];
+                int fd = -1;
+
+                if (strcmp(my_shell.argv[redirect], ">") == 0){
+                    fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                }
+                else if (strcmp(my_shell.argv[redirect], ">>") == 0) {
+                    fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
+                }
+
+                if (fd == -1){
+                    perror("open");
+                    exit(1);
+                }
+                if (dup2(fd, STDOUT_FILENO) == -1)
+                {
+                    perror("dup2");
+                    close(fd);
+                    exit(1);
+                }
+                close(fd);
+                for (int i = redirect; i < my_shell.argc - 2; i++){
+                    my_shell.argv[i] = my_shell.argv[i + 2];
+                }
+
+                my_shell.argc -= 2;
+            }
+        }
+
         execvp(my_shell.argv[0], my_shell.argv);
 
         perror("execvp");
@@ -96,6 +133,18 @@ void execute_command(){
     else{
         waitpid(p, NULL, 0);
     }
+}
 
+int find_redirection(){
+    for (int i = 0; i < my_shell.argc; i++)
+    {
+        if (strcmp(my_shell.argv[i], ">") == 0)
+        {
+            return i;
+        }
+        else if (strcmp(my_shell.argv[i], ">>") == 0)
+            return i;
+    }
 
+    return -1;
 }
