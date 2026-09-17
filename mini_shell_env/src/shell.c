@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <pwd.h>
 #include <fcntl.h>
@@ -207,6 +208,17 @@ void execute_command()
     if (strcmp(my_shell.argv[0], "ls") == 0)
     {
         handle_ls();
+        return;
+    }
+
+    if (strcmp(my_shell.argv[0], "mkdir") == 0)
+    {
+        handle_mkdir();
+        return;
+    }
+    if (strcmp(my_shell.argv[0], "touch") == 0)
+    {
+        handle_touch();
         return;
     }
 
@@ -655,4 +667,54 @@ void handle_ls()
     printf("\n");
 
     closedir(dir);
+}
+
+void handle_mkdir()
+{
+    if (my_shell.argv[1] == NULL)
+    {
+        fprintf(stderr, "mkdir: missing operand\n");
+        return;
+    }
+
+    char real_path[MAXDIR];
+
+    if (get_real_output_path(my_shell.argv[1], real_path) != 0)
+    {
+        fprintf(stderr, "mkdir: path outside environment or parent does not exist\n");
+        return;
+    }
+
+    if (mkdir(real_path, 0755) != 0)
+    {
+        perror("mkdir");
+        return;
+    }
+}
+
+void handle_touch()
+{
+    if (my_shell.argv[1] == NULL)
+    {
+        fprintf(stderr, "touch: missing operand\n");
+        return;
+    }
+
+    char real_path[MAXDIR];
+
+    if (get_real_output_path(my_shell.argv[1], real_path) != 0)
+    {
+        fprintf(stderr, "touch: path outside environment or parent does not exist\n");
+        return;
+    }
+
+    int fd = open(real_path, O_WRONLY | O_CREAT, 0644);
+
+    if (fd < 0)
+    {
+        perror("touch");
+        return;
+    }
+
+    close(fd);
 }

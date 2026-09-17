@@ -34,6 +34,8 @@ void handle_redirections(void);
 int find_pipe(void);
 void execute_pipes(void);
 void handle_ls(void);
+void handle_mkdir(void);
+void handle_touch(void);
 
 
 #endif
