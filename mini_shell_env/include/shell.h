@@ -38,7 +38,7 @@ void handle_mkdir(void);
 void handle_touch(void);
 void handle_rm(void);
 void handle_rmdir(void);
-
+void handle_pipe_redirections(char **argv);
 
 
 #endif

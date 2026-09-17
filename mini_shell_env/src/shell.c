@@ -429,6 +429,7 @@ int find_pipe()
 
 void execute_pipes()
 {
+
     int command_count = 1;
 
     for (int i = 0; i < my_shell.argc; i++)
@@ -504,6 +505,8 @@ void execute_pipes()
                 close(pipes[j][0]);
                 close(pipes[j][1]);
             }
+
+            handle_pipe_redirections(commands[i]);
 
             char *real_argv[MAXARGS];
             char paths[MAXARGS][MAXDIR];
@@ -810,5 +813,127 @@ void handle_rmdir()
     {
         perror("rmdir");
         return;
+    }
+}
+
+void handle_pipe_redirections(char **argv)
+{
+    for (int i = 0; argv[i] != NULL; i++)
+    {
+        if (strcmp(argv[i], ">") == 0)
+        {
+            if (argv[i + 1] == NULL)
+            {
+                fprintf(stderr, "No filename\n");
+                exit(1);
+            }
+
+            char real_path[MAXDIR];
+
+            if (get_real_output_path(argv[i + 1], real_path) != 0)
+            {
+                fprintf(stderr, "redirection: path outside environment\n");
+                exit(1);
+            }
+
+            int fd = open(real_path,
+                          O_WRONLY | O_CREAT | O_TRUNC,
+                          0644);
+
+            if (fd < 0)
+            {
+                perror("open");
+                exit(1);
+            }
+
+            if (dup2(fd, STDOUT_FILENO) < 0)
+            {
+                perror("dup2");
+                close(fd);
+                exit(1);
+            }
+
+            close(fd);
+
+            argv[i] = NULL;
+            return;
+        }
+
+        else if (strcmp(argv[i], ">>") == 0)
+        {
+            if (argv[i + 1] == NULL)
+            {
+                fprintf(stderr, "No filename\n");
+                exit(1);
+            }
+
+            char real_path[MAXDIR];
+
+            if (get_real_output_path(argv[i + 1], real_path) != 0)
+            {
+                fprintf(stderr, "redirection: path outside environment\n");
+                exit(1);
+            }
+
+            int fd = open(real_path,
+                          O_WRONLY | O_CREAT | O_APPEND,
+                          0644);
+
+            if (fd < 0)
+            {
+                perror("open");
+                exit(1);
+            }
+
+            if (dup2(fd, STDOUT_FILENO) < 0)
+            {
+                perror("dup2");
+                close(fd);
+                exit(1);
+            }
+
+            close(fd);
+
+            argv[i] = NULL;
+            return;
+        }
+
+        else if (strcmp(argv[i], "<") == 0)
+        {
+            if (argv[i + 1] == NULL)
+            {
+                fprintf(stderr, "No filename\n");
+                exit(1);
+            }
+
+            char real_path[MAXDIR];
+
+            if (get_real_path(argv[i + 1], real_path) != 0)
+            {
+                fprintf(stderr,
+                        "redirection: path outside environment or does not exist\n");
+                exit(1);
+            }
+
+            int fd = open(real_path, O_RDONLY);
+
+            if (fd < 0)
+            {
+                perror("open");
+                exit(1);
+            }
+
+            if (dup2(fd, STDIN_FILENO) < 0)
+            {
+                perror("dup2");
+                close(fd);
+                exit(1);
+            }
+
+            close(fd);
+
+            argv[i] = NULL;
+            return;
+        }
     }
 }
