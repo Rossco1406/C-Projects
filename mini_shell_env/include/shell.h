@@ -36,6 +36,9 @@ void execute_pipes(void);
 void handle_ls(void);
 void handle_mkdir(void);
 void handle_touch(void);
+void handle_rm(void);
+void handle_rmdir(void);
+
 
 
 #endif

@@ -221,6 +221,16 @@ void execute_command()
         handle_touch();
         return;
     }
+    if (strcmp(my_shell.argv[0], "rm") == 0)
+    {
+        handle_rm();
+        return;
+    }
+    if (strcmp(my_shell.argv[0], "rmdir") == 0)
+    {
+        handle_rmdir();
+        return;
+    }
 
     if (find_pipe() != -1)
     {
@@ -235,6 +245,22 @@ void handle_cd()
 {
     if (my_shell.argv[1] == NULL)
     {
+        strcpy(my_shell.cwd, "/home");
+
+        char real_path[MAXDIR];
+
+        if (get_real_path("/home", real_path) != 0)
+        {
+         fprintf(stderr, "cd: /home does not exist\n");
+            return;
+        }
+
+        if (chdir(real_path) != 0)
+        {
+            perror("cd");
+            return;
+        }
+
         return;
     }
 
@@ -479,7 +505,29 @@ void execute_pipes()
                 close(pipes[j][1]);
             }
 
-            execvp(commands[i][0], commands[i]);
+            char *real_argv[MAXARGS];
+            char paths[MAXARGS][MAXDIR];
+
+            int j;
+
+            for (j = 0; commands[i][j] != NULL; j++)
+            {
+                real_argv[j] = commands[i][j];
+
+                if (j > 0 && (commands[i][j][0] == '/' || commands[i][j][0] == '.'))
+                {
+                    if (get_real_path(commands[i][j], paths[j]) != 0)
+                    {
+                        fprintf(stderr, "path outside environment or does not exist\n");
+                        exit(1);
+                    }
+                real_argv[j] = paths[j];
+                }   
+            }
+
+            real_argv[j] = NULL;
+
+            execvp(real_argv[0], real_argv);
 
             perror("execvp");
             exit(1);
@@ -717,4 +765,50 @@ void handle_touch()
     }
 
     close(fd);
+}
+
+void handle_rm()
+{
+    if (my_shell.argv[1] == NULL)
+    {
+        fprintf(stderr, "rm: missing operand\n");
+        return;
+    }
+
+    char real_path[MAXDIR];
+
+    if (get_real_path(my_shell.argv[1], real_path) != 0)
+    {
+        fprintf(stderr, "rm: path outside environment or does not exist\n");
+        return;
+    }
+
+    if (remove(real_path) != 0)
+    {
+        perror("rm");
+        return;
+    }
+}
+
+void handle_rmdir()
+{
+    if (my_shell.argv[1] == NULL)
+    {
+        fprintf(stderr, "rmdir: missing operand\n");
+        return;
+    }
+
+    char real_path[MAXDIR];
+
+    if (get_real_path(my_shell.argv[1], real_path) != 0)
+    {
+        fprintf(stderr, "rmdir: path outside environment or does not exist\n");
+        return;
+    }
+
+    if (rmdir(real_path) != 0)
+    {
+        perror("rmdir");
+        return;
+    }
 }
