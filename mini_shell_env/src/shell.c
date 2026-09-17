@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <fcntl.h>
+#include <dirent.h>
 
 struct shell my_shell;
 
@@ -203,6 +204,12 @@ void execute_command()
         return;
     }
 
+    if (strcmp(my_shell.argv[0], "ls") == 0)
+    {
+        handle_ls();
+        return;
+    }
+
     if (find_pipe() != -1)
     {
         execute_pipes();
@@ -289,9 +296,14 @@ void execute_external_command()
         {
             real_argv[i] = my_shell.argv[i];
 
-            if (i > 0 && get_real_path(my_shell.argv[i], paths[i]) == 0)
+            if (i > 0 && (my_shell.argv[i][0] == '/' || my_shell.argv[i][0] == '.'))
             {
-                real_argv[i] = paths[i];
+                if (get_real_path(my_shell.argv[i], paths[i]) != 0)
+                {
+                    fprintf(stderr, "path outside environment or does not exist\n");
+                    exit(1);
+                }
+            real_argv[i] = paths[i];
             }
         }
 
@@ -560,7 +572,15 @@ void handle_redirections()
                 exit(1);
             }
 
-            int fd = open(my_shell.argv[i + 1], O_RDONLY);
+            char real_path[MAXDIR];
+
+            if (get_real_path(my_shell.argv[i + 1], real_path) != 0)
+            {
+                fprintf(stderr, "redirection: path outside environment or does not exist\n");
+                exit(1);
+            }
+
+            int fd = open(real_path, O_RDONLY);
 
             if (fd < 0)
             {
@@ -594,3 +614,31 @@ void remove_redirection(int position)
     my_shell.argv[my_shell.argc] = NULL;
 }
 
+void handle_ls()
+{
+    DIR *dir;
+    struct dirent *entry;
+
+    dir = opendir(my_shell.root);
+
+    if (dir == NULL)
+    {
+        perror("ls");
+        return;
+    }
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        if (strcmp(entry->d_name, ".") == 0 ||
+            strcmp(entry->d_name, "..") == 0)
+        {
+            continue;
+        }
+
+        printf("%s  ", entry->d_name);
+    }
+
+    printf("\n");
+
+    closedir(dir);
+}
