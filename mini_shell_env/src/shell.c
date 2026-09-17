@@ -616,16 +616,30 @@ void remove_redirection(int position)
 
 void handle_ls()
 {
-    DIR *dir;
-    struct dirent *entry;
+    char real_path[MAXDIR];
 
-    dir = opendir(my_shell.root);
+    if (my_shell.argv[1] == NULL)
+    {
+        strcpy(real_path, my_shell.root);
+    }
+    else
+    {
+        if (get_real_path(my_shell.argv[1], real_path) != 0)
+        {
+            fprintf(stderr, "ls: path outside environment or does not exist\n");
+            return;
+        }
+    }
+
+    DIR *dir = opendir(real_path);
 
     if (dir == NULL)
     {
         perror("ls");
         return;
     }
+
+    struct dirent *entry;
 
     while ((entry = readdir(dir)) != NULL)
     {
