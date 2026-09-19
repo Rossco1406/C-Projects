@@ -13,6 +13,8 @@
 
 void handle_sigchld(int signal)
 {
+    (void)signal;
+    
     while (waitpid(-1, NULL, WNOHANG) > 0)
     {
     }
