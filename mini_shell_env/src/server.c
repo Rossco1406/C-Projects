@@ -62,6 +62,34 @@ int main()
 
     printf("Client connected\n");
 
+    char buffer[1024];
+
+    ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+
+    if (bytes_received < 0)
+    {
+        perror("recv");
+        close(client_fd);
+        close(server_fd);
+        return 1;
+    }
+
+    buffer[bytes_received] = '\0';
+
+    printf("Received: %s\n", buffer);
+
+    char response[] = "Hello from server";
+
+    if (send(client_fd, response, strlen(response), 0) < 0)
+    {
+        perror("send");
+        close(client_fd);
+        close(server_fd);
+        return 1;
+    }
+
+    printf("Response sent\n");
+
     close(client_fd);
     close(server_fd);
 
