@@ -40,7 +40,12 @@ int main()
 
     printf("Connected to server\n");
 
-    char message[] = "Hello from client";
+    char message[1024];
+
+    printf("Enter command: ");
+    fgets(message, sizeof(message), stdin);
+
+    message[strcspn(message, "\n")] = '\0';
 
     if (send(client_fd, message, strlen(message), 0) < 0)
     {
