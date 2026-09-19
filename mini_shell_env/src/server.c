@@ -7,8 +7,12 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include "shell.h"
+
 int main()
 {
+    init_shell();
+
     int server_fd;
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -76,11 +80,72 @@ int main()
 
     buffer[bytes_received] = '\0';
 
-    printf("Received: %s\n", buffer);
+    int output_pipe[2];
 
-    char response[] = "Hello from server";
+    if (pipe(output_pipe) < 0)
+    {
+        perror("pipe");
+        close(client_fd);
+        close(server_fd);
+        return 1;
+    }
 
-    if (send(client_fd, response, strlen(response), 0) < 0)
+    int saved_stdout = dup(STDOUT_FILENO);
+
+    if (saved_stdout < 0)
+    {
+        perror("dup");
+        close(output_pipe[0]);
+        close(output_pipe[1]);
+        close(client_fd);
+        close(server_fd);
+        return 1;
+    }
+
+    if (dup2(output_pipe[1], STDOUT_FILENO) < 0)
+    {
+        perror("dup2");
+        close(output_pipe[0]);
+        close(output_pipe[1]);
+        close(saved_stdout);
+        close(client_fd);
+        close(server_fd);
+        return 1;
+    }
+
+    close(output_pipe[1]);  
+
+    execute_command_string(buffer);
+
+    if (dup2(saved_stdout, STDOUT_FILENO) < 0)
+    {
+        perror("dup2");
+    }
+
+    close(saved_stdout);
+
+    char output[4096];
+
+    ssize_t bytes_read = read(output_pipe[0],
+                          output,
+                          sizeof(output) - 1);
+
+    if (bytes_read < 0)
+    {
+        perror("read");
+        close(output_pipe[0]);
+        close(client_fd);
+        close(server_fd);
+        return 1;
+    }
+
+    output[bytes_read] = '\0';
+
+    close(output_pipe[0]);
+
+    printf("Command output:\n%s", output);
+
+    if (send(client_fd, output, bytes_read, 0) < 0)
     {
         perror("send");
         close(client_fd);

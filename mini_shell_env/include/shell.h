@@ -39,6 +39,7 @@ void handle_touch(void);
 void handle_rm(void);
 void handle_rmdir(void);
 void handle_pipe_redirections(char **argv);
+void execute_command_string(const char *command);
 
 
 #endif

@@ -937,3 +937,12 @@ void handle_pipe_redirections(char **argv)
         }
     }
 }
+
+void execute_command_string(const char *command)
+{
+    strcpy(my_shell.input, command);
+
+    parse_input();
+
+    execute_command();
+}
