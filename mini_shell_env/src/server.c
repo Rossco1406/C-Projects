@@ -6,12 +6,23 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 #include "shell.h"
+
+void handle_sigchld(int signal)
+{
+    while (waitpid(-1, NULL, WNOHANG) > 0)
+    {
+    }
+}
 
 int main()
 {
     init_shell();
+
+    signal(SIGCHLD, handle_sigchld);
 
     int server_fd;
 
