@@ -1,161 +1,344 @@
-# Mini Shell
+# Mini Shell Environment
 
-A simple command-line shell written in C that allows users to execute commands, navigate directories, redirect input and output, and connect commands using pipelines.
+A Linux-based command shell written in C, extended with a virtual filesystem environment and a TCP server allowing remote clients to interact with the shell over a network.
 
-The project was built to practise C programming concepts including processes, `fork()`, `execvp()`, pipes, file descriptors, input/output redirection, functions, arrays, pointers, header files, modular program design, error handling, Makefiles and Linux system calls.
+The project was developed as a progression from a basic command-line shell into a small systems-programming and networking project.
 
 ## Features
 
-Supports built-in commands and external programs, alongside input/output redirection and multiple command pipelines.
+### Shell
 
-The shell currently supports:
+* Built-in commands:
 
-* `cd`
-* `exit`
-* External commands
-* Input redirection `<`
-* Output redirection `>`
-* Append redirection `>>`
+  * `cd`
+  * `pwd`
+  * `ls`
+  * `mkdir`
+  * `touch`
+  * `rm`
+  * `rmdir`
+  * `exit`
+* External command execution using `fork()` and `execvp()`
+* Input and output redirection:
+
+  * `<`
+  * `>`
+  * `>>`
 * Multiple redirections
-* Single pipes
-* Multiple pipes
-* Error handling for invalid commands and file operations
+* Single and multiple pipes using `|`
+* Process and file-descriptor management
 
-### Examples
+### Virtual Filesystem
 
-Run the shell:
+The shell operates inside a restricted virtual environment:
 
-```bash
-./minishell
+```text
+env/
+├── home/
+├── files/
+└── ...
 ```
 
-Execute a command:
+The `env/` directory acts as the virtual root `/`.
 
-```bash
-ls
+For example:
+
+```text
+/
+├── home
+├── files
+└── ...
 ```
 
-Change directory:
+A command such as:
+
+```bash
+cd /home
+```
+
+changes the shell's virtual working directory without exposing the real host filesystem.
+
+Path validation prevents commands from escaping the virtual environment through paths such as:
 
 ```bash
 cd ..
+cat ../../etc/passwd
 ```
 
-Input redirection:
+### Networking
 
-```bash
-cat < input.txt
+The shell was extended with a TCP server and client.
+
+The server:
+
+* Creates a TCP socket
+* Binds to port `8080`
+* Accepts client connections
+* Creates a child process for each client using `fork()`
+* Receives shell commands
+* Executes them using the existing shell
+* Captures command output
+* Sends the output back to the client
+
+Multiple clients can connect simultaneously.
+
+The client provides an interactive command prompt and communicates with the server over TCP.
+
+## Architecture
+
+```text
+                    TCP
+┌──────────────┐              ┌──────────────────────┐
+│    Client    │─────────────▶│       Server         │
+│              │              │                      │
+│  iPhone /    │              │  accept()            │
+│  Linux/etc.  │◀─────────────│  fork()              │
+└──────────────┘              │  recv() / send()     │
+                              └──────────┬───────────┘
+                                         │
+                                         ▼
+                              ┌──────────────────────┐
+                              │     Shell Engine     │
+                              │                      │
+                              │ parser.c             │
+                              │ shell.c              │
+                              │                      │
+                              │ cd / ls / pwd / ...  │
+                              │ pipes / redirection  │
+                              └──────────┬───────────┘
+                                         │
+                                         ▼
+                              ┌──────────────────────┐
+                              │  Virtual Filesystem  │
+                              │                      │
+                              │       env/           │
+                              └──────────────────────┘
 ```
 
-Output redirection:
+## Project Structure
 
-```bash
-echo Hello > output.txt
+```text
+mini_shell_env/
+├── src/
+│   ├── main.c
+│   ├── shell.c
+│   ├── parser.c
+│   ├── server.c
+│   └── client.c
+│
+├── include/
+│   ├── shell.h
+│   └── parser.h
+│
+├── env/
+│   ├── home/
+│   ├── files/
+│   └── ...
+│
+├── Makefile
+└── README.md
 ```
-
-Append output:
-
-```bash
-echo World >> output.txt
-```
-
-Multiple redirections:
-
-```bash
-cat < input.txt > output.txt
-```
-
-Pipelines:
-
-```bash
-ls | grep .c
-```
-
-Multiple pipelines:
-
-```bash
-ls | grep .c | wc -l
-```
-
-## Structure
-
-The project is split into multiple source and header files to keep different parts of the shell modular.
-
-### `main.c`
-
-Contains the program entry point and starts the shell.
-
-### `shell.c`
-
-Contains the main shell logic, including:
-
-* Shell initialisation
-* User and current directory information
-* Command execution
-* Built-in commands
-* External command execution
-* Pipes
-* Input/output redirection
-* Process creation and management
-
-### `shell.h`
-
-Contains the shell structure, constants and function prototypes used throughout the project.
-
-### `parser.c`
-
-Contains the command parsing logic used to process user input and create the argument array passed to the shell.
-
-### `parser.h`
-
-Contains the parser function prototypes and definitions required by the parser.
 
 ## Building
 
-Compile the project using:
+The project is designed to run on Linux/WSL.
+
+Compile the shell:
 
 ```bash
 make
 ```
 
-This produces the `minishell` executable.
+The server can currently be compiled with:
 
-To run it:
+```bash
+gcc -Wall -Wextra -std=c11 -Iinclude \
+    src/server.c src/shell.c src/parser.c \
+    -o server
+```
+
+Compile the client with:
+
+```bash
+gcc -Wall -Wextra -std=c11 \
+    src/client.c \
+    -o client
+```
+
+## Running the Local Shell
+
+From the project directory:
 
 ```bash
 ./minishell
 ```
 
-The shell will display a prompt containing the current username and working directory.
+The `env/` directory becomes the virtual root of the shell.
 
-To remove compiled files:
+Example:
 
-```bash
-make clean
+```text
+/ $ pwd
+/
+
+/ $ ls
+files home
+
+/ $ cd home
+
+/home $ pwd
+/home
 ```
 
-## Purpose
+## Running the Server
 
-This project is part of my C programming practice and is intended to develop a stronger understanding of:
+Start the server:
 
-* C syntax and control flow
-* Functions
-* Pointers
-* Arrays
-* Structures
-* Header/source file separation
-* Modular program design
-* Command-line arguments
+```bash
+./server
+```
+
+The server listens on TCP port `8080`.
+
+A local client can then connect to:
+
+```text
+127.0.0.1:8080
+```
+
+Commands can be entered through the client:
+
+```text
+> pwd
+/
+> ls
+files
+home
+> mkdir test
+> ls
+files
+home
+test
+```
+
+## Remote Testing
+
+The server was also tested from another device on the same local network.
+
+The TCP connection follows:
+
+```text
+Client
+   │
+   ▼
+Windows host :8080
+   │
+   ▼
+WSL
+   │
+   ▼
+C TCP server
+```
+
+This allows a device such as an iPhone to send commands to the C server over Wi-Fi.
+
+## Concurrency
+
+The server uses `fork()` to create a separate child process for each connected client.
+
+The parent process continues accepting new connections while each child handles its client.
+
+```text
+                Server
+                  │
+          ┌───────┴───────┐
+          │               │
+       Client 1        Client 2
+          │               │
+       Child 1          Child 2
+```
+
+Child processes are cleaned up using `SIGCHLD` handling to prevent zombie processes.
+
+## Security
+
+The virtual filesystem uses path validation to prevent access outside the `env/` directory.
+
+Examples of rejected operations include:
+
+```bash
+cat /etc/passwd
+```
+
+and:
+
+```bash
+cat ../../etc/passwd
+```
+
+from inside the virtual environment.
+
+Output redirection is also checked so that commands cannot create files outside the virtual filesystem.
+
+The project does not use `chroot()`. Instead, paths are translated and validated by the shell before filesystem operations are performed.
+
+## Systems Programming Concepts
+
+This project provided practical experience with:
+
+* C
+* Linux
+* POSIX APIs
 * Processes
 * `fork()`
 * `execvp()`
 * `waitpid()`
-* Pipes
+* Signals
 * File descriptors
-* `open()`
+* `pipe()`
+* `dup()`
 * `dup2()`
-* Standard input and output streams
-* Linux system calls
-* Error handling
+* Filesystem APIs
+* Directory traversal
+* Path validation
+* TCP sockets
+* Client/server architecture
+* Concurrent connections
 * Makefiles
-* Git and GitHub
+* Git
+
+## Future Improvements
+
+Potential future development includes:
+
+* Robust TCP message framing
+* Handling partial `send()` and `recv()` operations
+* Support for command output larger than the current buffer
+* Sending `stderr` to the client
+* Improving command and input length handling
+* More complete shell syntax
+* Better client/server error handling
+* Authentication
+* A more structured networking protocol
+* Moving server/client compilation into the Makefile
+
+## What I Learned
+
+The project developed from implementing basic shell functionality into a larger systems-programming project involving processes, filesystems and networking.
+
+The most significant progression was connecting several independent concepts:
+
+```text
+Shell
+  ↓
+Processes
+  ↓
+Virtual Filesystem
+  ↓
+TCP Server
+  ↓
+Concurrent Clients
+```
+
+This provided practical experience with how Linux processes, file descriptors, system calls and network sockets interact at a low level.
+
