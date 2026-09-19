@@ -66,94 +66,103 @@ int main()
 
     printf("Client connected\n");
 
-    char buffer[1024];
+    while (1){
 
-    ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+        char buffer[1024];
 
-    if (bytes_received < 0)
-    {
-        perror("recv");
-        close(client_fd);
-        close(server_fd);
-        return 1;
-    }
+        ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
-    buffer[bytes_received] = '\0';
+        if (bytes_received < 0)
+        {
+            perror("recv");
+            close(client_fd);
+            close(server_fd);
+            return 1;
+        }
 
-    int output_pipe[2];
+        buffer[bytes_received] = '\0';
 
-    if (pipe(output_pipe) < 0)
-    {
-        perror("pipe");
-        close(client_fd);
-        close(server_fd);
-        return 1;
-    }
+        if (strcmp(buffer, "exit") == 0)
+        {
+            printf("Client requested disconnect\n");
+            break;
+        }
 
-    int saved_stdout = dup(STDOUT_FILENO);
+        int output_pipe[2];
 
-    if (saved_stdout < 0)
-    {
-        perror("dup");
-        close(output_pipe[0]);
-        close(output_pipe[1]);
-        close(client_fd);
-        close(server_fd);
-        return 1;
-    }
+        if (pipe(output_pipe) < 0)
+        {
+            perror("pipe");
+            close(client_fd);
+            close(server_fd);
+            return 1;
+        }
 
-    if (dup2(output_pipe[1], STDOUT_FILENO) < 0)
-    {
-        perror("dup2");
-        close(output_pipe[0]);
-        close(output_pipe[1]);
+        int saved_stdout = dup(STDOUT_FILENO);
+
+        if (saved_stdout < 0)
+        {
+            perror("dup");
+            close(output_pipe[0]);
+            close(output_pipe[1]);
+            close(client_fd);
+            close(server_fd);
+            return 1;
+        }
+
+        if (dup2(output_pipe[1], STDOUT_FILENO) < 0)
+        {
+            perror("dup2");
+            close(output_pipe[0]);
+            close(output_pipe[1]);
+            close(saved_stdout);
+            close(client_fd);
+            close(server_fd);
+            return 1;
+        }
+
+        close(output_pipe[1]);  
+
+        execute_command_string(buffer);
+
+        if (dup2(saved_stdout, STDOUT_FILENO) < 0)
+        {
+            perror("dup2");
+        }
+
         close(saved_stdout);
-        close(client_fd);
-        close(server_fd);
-        return 1;
-    }
 
-    close(output_pipe[1]);  
+        char output[4096];
 
-    execute_command_string(buffer);
+        ssize_t bytes_read = read(output_pipe[0],
+                            output,
+                            sizeof(output) - 1);
 
-    if (dup2(saved_stdout, STDOUT_FILENO) < 0)
-    {
-        perror("dup2");
-    }
+        if (bytes_read < 0)
+        {
+            perror("read");
+            close(output_pipe[0]);
+            close(client_fd);
+            close(server_fd);
+            return 1;
+        }
 
-    close(saved_stdout);
+        output[bytes_read] = '\0';
 
-    char output[4096];
-
-    ssize_t bytes_read = read(output_pipe[0],
-                          output,
-                          sizeof(output) - 1);
-
-    if (bytes_read < 0)
-    {
-        perror("read");
         close(output_pipe[0]);
-        close(client_fd);
-        close(server_fd);
-        return 1;
+
+        printf("Command output:\n%s", output);
+
+        if (send(client_fd, output, bytes_read, 0) < 0)
+        {
+            perror("send");
+            close(client_fd);
+            close(server_fd);
+            return 1;
+        }
+
+        printf("Response sent\n");
     }
-
-    output[bytes_read] = '\0';
-
-    close(output_pipe[0]);
-
-    printf("Command output:\n%s", output);
-
-    if (send(client_fd, output, bytes_read, 0) < 0)
-    {
-        perror("send");
-        close(client_fd);
-        close(server_fd);
-        return 1;
-    }
-
-    printf("Response sent\n");
 
     close(client_fd);
     close(server_fd);

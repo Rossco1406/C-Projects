@@ -40,41 +40,47 @@ int main()
 
     printf("Connected to server\n");
 
-    char message[1024];
+    while(1){
 
-    printf("Enter command: ");
-    fgets(message, sizeof(message), stdin);
+        char message[1024];
 
-    message[strcspn(message, "\n")] = '\0';
+        printf("> ");
+        fgets(message, sizeof(message), stdin);
 
-    if (send(client_fd, message, strlen(message), 0) < 0)
-    {
-        perror("send");
-        close(client_fd);
-        return 1;
-    }
+        message[strcspn(message, "\n")] = '\0';
 
-    printf("Message sent\n");
+        if (send(client_fd, message, strlen(message), 0) < 0)
+        {
+            perror("send");
+            break;
+        }
 
-    char buffer[1024];
+        char buffer[1024];
 
-    ssize_t bytes_received = recv(client_fd,
+        ssize_t bytes_received = recv(client_fd,
                               buffer,
                               sizeof(buffer) - 1,
                               0);
 
-    if (bytes_received < 0)
-    {
-        perror("recv");
-        close(client_fd);
-        return 1;
+        if (bytes_received < 0)
+        {
+            perror("recv");
+            break;
+        }
+
+        if (bytes_received == 0)
+        {
+            printf("Server disconnected\n");
+            break;
+        }
+
+        buffer[bytes_received] = '\0';
+
+        printf("%s", buffer);
+
     }
-
-    buffer[bytes_received] = '\0';
-
-    printf("Server response: %s\n", buffer);
 
     close(client_fd);
 
-    return 0;
+return 0;
 }
