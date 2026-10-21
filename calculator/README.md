@@ -8,7 +8,7 @@ The project was built to practise C programming concepts including functions, po
 
 The calculator currently supports:
 
-* Addition: ``
+* Addition: `+`
 * Subtraction: `-`
 * Multiplication: `*`
 * Division: `/`
